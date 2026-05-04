@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team Task Manager - Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#6366f1',
+                        secondary: '#4f46e5',
+                        dark: '#0f172a',
+                        darker: '#020617',
+                        glass: 'rgba(255, 255, 255, 0.05)',
+                        glassBorder: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .gradient-text {
+            background: linear-gradient(to right, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
+</head>
+<body class="bg-darker text-gray-200 min-h-screen flex items-center justify-center relative overflow-hidden">
+    
+    <!-- Background Accents -->
+    <div class="absolute top-[-10%] left-[-10%] w-96 h-96 bg-primary rounded-full mix-blend-multiply filter blur-[128px] opacity-20"></div>
+    <div class="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-purple-600 rounded-full mix-blend-multiply filter blur-[128px] opacity-20"></div>
+
+    <div class="glass-panel p-8 rounded-2xl w-full max-w-md z-10 shadow-2xl transition-all duration-300">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold gradient-text mb-2">Team Task Manager</h1>
+            <p class="text-sm text-gray-400">Sign in to continue to your dashboard</p>
+        </div>
+
+        <!-- Toggle Login/Signup -->
+        <div class="flex mb-6 bg-dark rounded-lg p-1">
+            <button id="show-login" class="w-1/2 py-2 text-sm font-medium rounded-md bg-primary text-white transition-all">Login</button>
+            <button id="show-signup" class="w-1/2 py-2 text-sm font-medium rounded-md text-gray-400 hover:text-white transition-all">Sign Up</button>
+        </div>
+
+        <!-- Form Container -->
+        <div id="form-container">
+            <!-- Login Form -->
+            <form id="login-form" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-gray-400 mb-1">Email Address</label>
+                    <input type="email" id="login-email" required class="w-full bg-dark border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-400 mb-1">Password</label>
+                    <input type="password" id="login-password" required class="w-full bg-dark border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors">
+                </div>
+                <button type="submit" class="w-full bg-primary hover:bg-secondary text-white font-medium py-2.5 rounded-lg shadow-lg shadow-primary/30 transition-all transform hover:-translate-y-0.5 mt-4">
+                    Sign In
+                </button>
+            </form>
+
+            <!-- Signup Form (Hidden by default) -->
+            <form id="signup-form" class="space-y-4 hidden">
+                <div>
+                    <label class="block text-xs font-medium text-gray-400 mb-1">Full Name</label>
+                    <input type="text" id="signup-name" required class="w-full bg-dark border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-400 mb-1">Email Address</label>
+                    <input type="email" id="signup-email" required class="w-full bg-dark border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-400 mb-1">Password</label>
+                    <input type="password" id="signup-password" required class="w-full bg-dark border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-400 mb-1">Role</label>
+                    <select id="signup-role" class="w-full bg-dark border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors">
+                        <option value="Member">Member</option>
+                        <option value="Admin">Admin</option>
+                    </select>
+                </div>
+                <button type="submit" class="w-full bg-primary hover:bg-secondary text-white font-medium py-2.5 rounded-lg shadow-lg shadow-primary/30 transition-all transform hover:-translate-y-0.5 mt-4">
+                    Create Account
+                </button>
+            </form>
+        </div>
+        
+        <div id="auth-error" class="text-red-400 text-sm text-center mt-4 hidden"></div>
+        <div id="auth-success" class="text-green-400 text-sm text-center mt-4 hidden"></div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:5000/api';
+
+        const showLoginBtn = document.getElementById('show-login');
+        const showSignupBtn = document.getElementById('show-signup');
+        const loginForm = document.getElementById('login-form');
+        const signupForm = document.getElementById('signup-form');
+        const authError = document.getElementById('auth-error');
+        const authSuccess = document.getElementById('auth-success');
+
+        // Toggle UI
+        showSignupBtn.addEventListener('click', () => {
+            loginForm.classList.add('hidden');
+            signupForm.classList.remove('hidden');
+            showSignupBtn.classList.replace('text-gray-400', 'text-white');
+            showSignupBtn.classList.replace('bg-transparent', 'bg-primary');
+            showLoginBtn.classList.replace('text-white', 'text-gray-400');
+            showLoginBtn.classList.replace('bg-primary', 'bg-transparent');
+            authError.classList.add('hidden');
+            authSuccess.classList.add('hidden');
+        });
+
+        showLoginBtn.addEventListener('click', () => {
+            signupForm.classList.add('hidden');
+            loginForm.classList.remove('hidden');
+            showLoginBtn.classList.replace('text-gray-400', 'text-white');
+            showLoginBtn.classList.replace('bg-transparent', 'bg-primary');
+            showSignupBtn.classList.replace('text-white', 'text-gray-400');
+            showSignupBtn.classList.replace('bg-primary', 'bg-transparent');
+            authError.classList.add('hidden');
+            authSuccess.classList.add('hidden');
+        });
+
+        // Handle Login
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+
+            try {
+                const res = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    window.location.href = 'dashboard.html';
+                } else {
+                    authError.textContent = data.message;
+                    authError.classList.remove('hidden');
+                }
+            } catch (err) {
+                authError.textContent = 'Failed to connect to server';
+                authError.classList.remove('hidden');
+            }
+        });
+
+        // Handle Signup
+        signupForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('signup-name').value;
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value;
+            const role = document.getElementById('signup-role').value;
+
+            try {
+                const res = await fetch(`${API_URL}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, password, role })
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    authSuccess.textContent = 'Account created! Please log in.';
+                    authSuccess.classList.remove('hidden');
+                    authError.classList.add('hidden');
+                    showLoginBtn.click();
+                } else {
+                    authError.textContent = data.message;
+                    authError.classList.remove('hidden');
+                }
+            } catch (err) {
+                authError.textContent = 'Failed to connect to server';
+                authError.classList.remove('hidden');
+            }
+        });
+    </script>
+</body>
+</html>

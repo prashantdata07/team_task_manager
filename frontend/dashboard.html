@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Team Task Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#6366f1',
+                        secondary: '#4f46e5',
+                        dark: '#0f172a',
+                        darker: '#020617',
+                        card: '#1e293b',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .gradient-text {
+            background: linear-gradient(to right, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    </style>
+</head>
+<body class="bg-darker text-gray-200 min-h-screen flex overflow-hidden">
+    
+    <!-- Sidebar -->
+    <aside class="w-64 glass-panel border-r border-gray-800 flex flex-col hidden md:flex z-20">
+        <div class="p-6">
+            <h2 class="text-xl font-bold gradient-text">Task Manager</h2>
+            <div class="mt-2 text-xs text-gray-400">Role: <span id="user-role-badge" class="px-2 py-0.5 rounded bg-primary/20 text-primary font-medium ml-1"></span></div>
+        </div>
+        <nav class="flex-1 px-4 space-y-2 mt-4">
+            <a href="#" onclick="showSection('dashboard')" class="nav-item flex items-center gap-3 px-4 py-3 rounded-lg bg-primary/10 text-primary transition-colors">
+                <i class="fas fa-home"></i> Dashboard
+            </a>
+            <a href="#" onclick="showSection('projects')" class="nav-item flex items-center gap-3 px-4 py-3 rounded-lg text-gray-400 hover:bg-gray-800 hover:text-white transition-colors">
+                <i class="fas fa-project-diagram"></i> Projects
+            </a>
+        </nav>
+        <div class="p-4 border-t border-gray-800">
+            <div class="flex items-center gap-3 px-4 py-2 mb-2">
+                <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-primary to-purple-500 flex items-center justify-center text-white font-bold" id="user-avatar">U</div>
+                <div class="text-sm font-medium truncate" id="user-name">User Name</div>
+            </div>
+            <button onclick="logout()" class="w-full flex items-center gap-3 px-4 py-2 text-red-400 hover:bg-red-400/10 rounded-lg transition-colors">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col h-screen overflow-hidden relative">
+        <!-- Background Accents -->
+        <div class="absolute top-[-20%] left-[20%] w-96 h-96 bg-primary rounded-full mix-blend-multiply filter blur-[128px] opacity-10 pointer-events-none"></div>
+        <div class="absolute bottom-[-20%] right-[-10%] w-96 h-96 bg-purple-600 rounded-full mix-blend-multiply filter blur-[128px] opacity-10 pointer-events-none"></div>
+
+        <!-- Header (Mobile) -->
+        <header class="md:hidden glass-panel border-b border-gray-800 p-4 flex justify-between items-center z-20">
+            <h2 class="text-xl font-bold gradient-text">Task Manager</h2>
+            <button onclick="logout()" class="text-red-400"><i class="fas fa-sign-out-alt"></i></button>
+        </header>
+
+        <!-- Content Area -->
+        <div class="flex-1 overflow-y-auto p-6 md:p-10 z-10">
+            
+            <!-- Dashboard Section -->
+            <section id="dashboard-section" class="space-y-6">
+                <header class="flex justify-between items-end mb-8">
+                    <div>
+                        <h1 class="text-3xl font-bold text-white mb-2">Overview</h1>
+                        <p class="text-gray-400" id="welcome-message">Welcome back!</p>
+                    </div>
+                </header>
+
+                <!-- Stats -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="glass-panel p-6 rounded-xl border border-gray-700/50">
+                        <div class="text-gray-400 text-sm font-medium mb-1">Total Tasks</div>
+                        <div class="text-3xl font-bold text-white" id="stat-total">0</div>
+                    </div>
+                    <div class="glass-panel p-6 rounded-xl border border-gray-700/50">
+                        <div class="text-green-400 text-sm font-medium mb-1">Completed</div>
+                        <div class="text-3xl font-bold text-white" id="stat-completed">0</div>
+                    </div>
+                    <div class="glass-panel p-6 rounded-xl border border-gray-700/50">
+                        <div class="text-yellow-400 text-sm font-medium mb-1">Pending</div>
+                        <div class="text-3xl font-bold text-white" id="stat-pending">0</div>
+                    </div>
+                </div>
+
+                <!-- Assigned Projects Summary -->
+                <div class="mb-8">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold text-white">Assigned Projects</h2>
+                        <button onclick="showSection('projects')" class="text-sm text-primary hover:text-secondary transition-colors">View All &rarr;</button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="dashboard-projects-grid">
+                        <!-- Dashboard projects will be injected here -->
+                    </div>
+                </div>
+
+                <!-- Project Tasks -->
+                <div>
+                    <h2 class="text-xl font-bold text-white mb-4">Project Tasks</h2>
+                    <div class="glass-panel rounded-xl border border-gray-700/50 overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-gray-800/50 text-gray-400 text-sm border-b border-gray-700">
+                                        <th class="py-3 px-4 font-medium">Task</th>
+                                        <th class="py-3 px-4 font-medium">Project</th>
+                                        <th class="py-3 px-4 font-medium">Due Date</th>
+                                        <th class="py-3 px-4 font-medium">Status</th>
+                                        <th class="py-3 px-4 font-medium text-right">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tasks-table-body" class="text-sm divide-y divide-gray-800">
+                                    <!-- Tasks will be injected here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Projects Section -->
+            <section id="projects-section" class="space-y-6 hidden">
+                <header class="flex justify-between items-end mb-8">
+                    <div>
+                        <h1 class="text-3xl font-bold text-white mb-2">Projects</h1>
+                        <p class="text-gray-400">Manage your projects and team members</p>
+                    </div>
+                    <button id="btn-create-project" class="hidden bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg text-sm font-medium shadow-lg shadow-primary/20 transition-all">
+                        <i class="fas fa-plus mr-2"></i> New Project
+                    </button>
+                </header>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6" id="projects-grid">
+                    <!-- Projects will be injected here -->
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Modals -->
+    <!-- Create Project Modal -->
+    <div id="modal-project" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        <div class="glass-panel p-6 rounded-2xl w-full max-w-md border border-gray-700 shadow-2xl transform scale-95 transition-transform duration-300" id="modal-project-content">
+            <h3 class="text-xl font-bold text-white mb-4">Create New Project</h3>
+            <form id="form-create-project" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-gray-400 mb-1">Project Name</label>
+                    <input type="text" id="proj-name" required class="w-full bg-dark border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-400 mb-1">Description</label>
+                    <textarea id="proj-desc" rows="3" class="w-full bg-dark border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary"></textarea>
+                </div>
+                <div class="flex justify-end gap-3 mt-6">
+                    <button type="button" onclick="closeModal('modal-project')" class="px-4 py-2 text-sm font-medium text-gray-400 hover:text-white">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-primary hover:bg-secondary text-white text-sm font-medium rounded-lg">Create</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create Task Modal -->
+    <div id="modal-task" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        <div class="glass-panel p-6 rounded-2xl w-full max-w-md border border-gray-700 shadow-2xl transform scale-95 transition-transform duration-300" id="modal-task-content">
+            <h3 class="text-xl font-bold text-white mb-4">Add Task</h3>
+            <form id="form-create-task" class="space-y-4">
+                <input type="hidden" id="task-project-id">
+                <div>
+                    <label class="block text-xs font-medium text-gray-400 mb-1">Task Title</label>
+                    <input type="text" id="task-title" required class="w-full bg-dark border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-400 mb-1">Description</label>
+                    <textarea id="task-desc" rows="2" class="w-full bg-dark border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary"></textarea>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-400 mb-1">Assign To</label>
+                        <select id="task-assignee" required class="w-full bg-dark border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary">
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-400 mb-1">Due Date</label>
+                        <input type="date" id="task-due" required class="w-full bg-dark border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary">
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 mt-6">
+                    <button type="button" onclick="closeModal('modal-task')" class="px-4 py-2 text-sm font-medium text-gray-400 hover:text-white">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-primary hover:bg-secondary text-white text-sm font-medium rounded-lg">Add Task</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Member Modal -->
+    <div id="modal-member" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        <div class="glass-panel p-6 rounded-2xl w-full max-w-md border border-gray-700 shadow-2xl transform scale-95 transition-transform duration-300" id="modal-member-content">
+            <h3 class="text-xl font-bold text-white mb-4">Add Team Member</h3>
+            <form id="form-add-member" class="space-y-4">
+                <input type="hidden" id="member-project-id">
+                <div>
+                    <label class="block text-xs font-medium text-gray-400 mb-1">Select User</label>
+                    <select id="member-select" required class="w-full bg-dark border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary">
+                        <!-- Populated dynamically -->
+                    </select>
+                </div>
+                <div class="flex justify-end gap-3 mt-6">
+                    <button type="button" onclick="closeModal('modal-member')" class="px-4 py-2 text-sm font-medium text-gray-400 hover:text-white">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-primary hover:bg-secondary text-white text-sm font-medium rounded-lg">Add Member</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:5000/api';
+        
+        // Auth check
+        const token = localStorage.getItem('token');
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (!token || !user) {
+            window.location.href = 'index.html';
+        }
+
+        // Setup UI based on role
+        document.getElementById('user-name').textContent = user.name;
+        document.getElementById('user-avatar').textContent = user.name.charAt(0).toUpperCase();
+        document.getElementById('welcome-message').textContent = `Welcome back, ${user.name}!`;
+        document.getElementById('user-role-badge').textContent = user.role;
+
+        if (user.role === 'Admin') {
+            document.getElementById('btn-create-project').classList.remove('hidden');
+        }
+
+        // Logout
+        function logout() {
+            localStorage.clear();
+            window.location.href = 'index.html';
+        }
+
+        // Navigation
+        function showSection(sectionId) {
+            document.getElementById('dashboard-section').classList.add('hidden');
+            document.getElementById('projects-section').classList.add('hidden');
+            document.getElementById(`${sectionId}-section`).classList.remove('hidden');
+            
+            document.querySelectorAll('.nav-item').forEach(el => {
+                el.classList.remove('bg-primary/10', 'text-primary');
+                el.classList.add('text-gray-400');
+            });
+            event.currentTarget.classList.remove('text-gray-400');
+            event.currentTarget.classList.add('bg-primary/10', 'text-primary');
+
+            if(sectionId === 'dashboard') loadDashboard();
+            if(sectionId === 'projects') loadProjects();
+        }
+
+        // API Fetch Wrapper
+        async function apiFetch(endpoint, options = {}) {
+            const headers = {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+                ...options.headers
+            };
+            const response = await fetch(`${API_URL}${endpoint}`, { ...options, headers });
+            if (response.status === 401 || response.status === 403) {
+                // logout();
+            }
+            return response;
+        }
+
+        // Load Dashboard Tasks and Projects
+        async function loadDashboard() {
+            // Load Dashboard Projects
+            const projRes = await apiFetch('/projects');
+            if(projRes.ok) {
+                const projects = await projRes.json();
+                const grid = document.getElementById('dashboard-projects-grid');
+                grid.innerHTML = '';
+                if(projects.length === 0) {
+                    grid.innerHTML = '<div class="col-span-full text-sm text-gray-500">No projects assigned to you.</div>';
+                } else {
+                    // Show up to 3 projects on the dashboard
+                    for(const project of projects.slice(0, 3)) {
+                        grid.innerHTML += `
+                            <div class="glass-panel p-4 rounded-xl border border-gray-700/50 hover:border-gray-600 transition-colors cursor-pointer" onclick="showSection('projects')">
+                                <h3 class="text-base font-bold text-white truncate">${project.name}</h3>
+                                <p class="text-xs text-gray-400 mt-1 truncate">${project.description || 'No description'}</p>
+                            </div>
+                        `;
+                    }
+                }
+            }
+
+            // Load Dashboard Tasks
+            const res = await apiFetch('/tasks');
+            if(res.ok) {
+                const tasks = await res.json();
+                
+                // Update Stats
+                document.getElementById('stat-total').textContent = tasks.length;
+                document.getElementById('stat-completed').textContent = tasks.filter(t => t.status === 'Completed').length;
+                document.getElementById('stat-pending').textContent = tasks.filter(t => t.status !== 'Completed').length;
+
+                // Render Table
+                const tbody = document.getElementById('tasks-table-body');
+                tbody.innerHTML = '';
+                
+                if(tasks.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="py-4 text-center text-gray-500">No tasks found. Click on the Projects tab on the left to view your assigned projects.</td></tr>';
+                    return;
+                }
+
+                tasks.forEach(task => {
+                    const statusColors = {
+                        'Pending': 'bg-yellow-500/20 text-yellow-500',
+                        'In Progress': 'bg-blue-500/20 text-blue-500',
+                        'Completed': 'bg-green-500/20 text-green-500',
+                        'Overdue': 'bg-red-500/20 text-red-500'
+                    };
+                    
+                    const date = new Date(task.due_date).toLocaleDateString();
+                    
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-gray-800/30 transition-colors">
+                            <td class="py-3 px-4">
+                                <div class="font-medium text-white">${task.title}</div>
+                                <div class="text-xs text-gray-500">${task.description || ''}</div>
+                            </td>
+                            <td class="py-3 px-4 text-gray-300">${task.project_name}</td>
+                            <td class="py-3 px-4 text-gray-400">${date}</td>
+                            <td class="py-3 px-4">
+                                <span class="px-2 py-1 text-xs font-medium rounded ${statusColors[task.status]}">${task.status}</span>
+                            </td>
+                            <td class="py-3 px-4 text-right">
+                                <select onchange="updateTaskStatus(${task.id}, this.value)" class="bg-dark border border-gray-700 text-xs rounded px-2 py-1 text-gray-300 focus:outline-none">
+                                    <option value="Pending" ${task.status === 'Pending' ? 'selected' : ''}>Pending</option>
+                                    <option value="In Progress" ${task.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
+                                    <option value="Completed" ${task.status === 'Completed' ? 'selected' : ''}>Completed</option>
+                                </select>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+        }
+
+        // Update Task Status
+        async function updateTaskStatus(taskId, status) {
+            await apiFetch(`/tasks/${taskId}/status`, {
+                method: 'PUT',
+                body: JSON.stringify({ status })
+            });
+            loadDashboard(); // reload to update stats
+            if(!document.getElementById('projects-section').classList.contains('hidden')) {
+                loadProjects(); // reload project tasks if viewing projects
+            }
+        }
+
+        // Load Projects
+        async function loadProjects() {
+            const res = await apiFetch('/projects');
+            if(res.ok) {
+                const projects = await res.json();
+                const grid = document.getElementById('projects-grid');
+                grid.innerHTML = '';
+
+                if(projects.length === 0) {
+                    grid.innerHTML = '<div class="col-span-full text-center text-gray-500 py-10">No projects found.</div>';
+                    return;
+                }
+
+                for(const project of projects) {
+                    // Fetch members for each project
+                    const memRes = await apiFetch(`/projects/${project.id}/members`);
+                    let membersHtml = '';
+                    if(memRes.ok) {
+                        const members = await memRes.json();
+                        membersHtml = members.map(m => `<div class="w-6 h-6 rounded-full bg-gray-600 border border-gray-800 flex items-center justify-center text-[10px] text-white font-bold -ml-2 first:ml-0" title="${m.name}">${m.name.charAt(0)}</div>`).join('');
+                    }
+
+                    const adminControls = user.role === 'Admin' ? `
+                        <div class="flex gap-2 mt-4 pt-4 border-t border-gray-700/50">
+                            <button onclick="openTaskModal(${project.id})" class="text-xs bg-primary/20 hover:bg-primary/30 text-primary px-3 py-1.5 rounded transition-colors flex-1 text-center"><i class="fas fa-plus mr-1"></i> Add Task</button>
+                            <button onclick="openMemberModal(${project.id})" class="text-xs bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 px-3 py-1.5 rounded transition-colors flex-1 text-center"><i class="fas fa-user-plus mr-1"></i> Add Member</button>
+                        </div>
+                    ` : '';
+
+                    grid.innerHTML += `
+                        <div class="glass-panel p-6 rounded-xl border border-gray-700/50 flex flex-col h-full hover:border-gray-600 transition-colors">
+                            <div class="flex justify-between items-start mb-2">
+                                <h3 class="text-lg font-bold text-white">${project.name}</h3>
+                                <div class="flex pl-2">${membersHtml}</div>
+                            </div>
+                            <p class="text-sm text-gray-400 mb-4 flex-1">${project.description || 'No description'}</p>
+                            ${adminControls}
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        // Fetch All Users for Selects (Admin only)
+        async function fetchUsers() {
+            if(user.role !== 'Admin') return [];
+            const res = await apiFetch('/users');
+            if(res.ok) return await res.json();
+            return [];
+        }
+
+        // Modals Logic
+        function openModal(id) {
+            const modal = document.getElementById(id);
+            const content = document.getElementById(`${id}-content`);
+            modal.classList.remove('hidden');
+            // small delay to allow display block to apply before animating opacity
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                content.classList.remove('scale-95');
+            }, 10);
+        }
+
+        function closeModal(id) {
+            const modal = document.getElementById(id);
+            const content = document.getElementById(`${id}-content`);
+            modal.classList.add('opacity-0');
+            content.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        // Create Project Modal
+        document.getElementById('btn-create-project').addEventListener('click', () => {
+            document.getElementById('form-create-project').reset();
+            openModal('modal-project');
+        });
+
+        document.getElementById('form-create-project').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('proj-name').value;
+            const description = document.getElementById('proj-desc').value;
+            
+            const res = await apiFetch('/projects', {
+                method: 'POST',
+                body: JSON.stringify({ name, description })
+            });
+
+            if(res.ok) {
+                closeModal('modal-project');
+                loadProjects();
+            } else {
+                alert('Failed to create project');
+            }
+        });
+
+        // Add Task Modal
+        async function openTaskModal(projectId) {
+            document.getElementById('form-create-task').reset();
+            document.getElementById('task-project-id').value = projectId;
+            
+            // Populate assignees (Project Members)
+            const res = await apiFetch(`/projects/${projectId}/members`);
+            if(res.ok) {
+                const members = await res.json();
+                const select = document.getElementById('task-assignee');
+                select.innerHTML = '<option value="">Select Assignee</option>';
+                members.forEach(m => {
+                    select.innerHTML += `<option value="${m.id}">${m.name}</option>`;
+                });
+            }
+            openModal('modal-task');
+        }
+
+        document.getElementById('form-create-task').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const projectId = document.getElementById('task-project-id').value;
+            const title = document.getElementById('task-title').value;
+            const description = document.getElementById('task-desc').value;
+            const assigned_to = document.getElementById('task-assignee').value;
+            const due_date = document.getElementById('task-due').value;
+
+            const res = await apiFetch(`/tasks/${projectId}`, {
+                method: 'POST',
+                body: JSON.stringify({ title, description, assigned_to, due_date })
+            });
+
+            if(res.ok) {
+                closeModal('modal-task');
+                loadDashboard(); // refreshing stats
+            } else {
+                alert('Failed to add task');
+            }
+        });
+
+        // Add Member Modal
+        async function openMemberModal(projectId) {
+            document.getElementById('form-add-member').reset();
+            document.getElementById('member-project-id').value = projectId;
+            
+            // Populate all users to select from
+            const users = await fetchUsers();
+            const select = document.getElementById('member-select');
+            select.innerHTML = '<option value="">Select User</option>';
+            users.forEach(u => {
+                select.innerHTML += `<option value="${u.id}">${u.name} (${u.email})</option>`;
+            });
+
+            openModal('modal-member');
+        }
+
+        document.getElementById('form-add-member').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const projectId = document.getElementById('member-project-id').value;
+            const user_id = document.getElementById('member-select').value;
+
+            const res = await apiFetch(`/projects/${projectId}/members`, {
+                method: 'POST',
+                body: JSON.stringify({ user_id })
+            });
+
+            if(res.ok) {
+                closeModal('modal-member');
+                loadProjects(); // refresh avatars
+            } else {
+                alert('Failed to add member. They might already be in the project.');
+            }
+        });
+
+        // Init
+        loadDashboard();
+
+    </script>
+</body>
+</html>
